@@ -1,5 +1,7 @@
 use dioxus::prelude::*;
 
+#[cfg(feature = "server")]
+use dioxus::logger::tracing;
 #[derive(Debug, Clone, PartialEq, serde::Serialize, serde::Deserialize)]
 pub struct TaskItem {
     pub id: i32,
@@ -34,23 +36,24 @@ thread_local! {
 
 #[server]
 pub async fn get_tasks() -> Result<Vec<TaskItem>, ServerFnError> {
-    let taskItems = DB.with(|db| {
-        let mut stmt = db.prepare("SELECT * FROM tasks").unwrap();
-        let taskItems = stmt
+    let result: rusqlite::Result<Vec<TaskItem>> = DB.with(|db| {
+        let mut stmt = db.prepare("SELECT * FROM tasks")?;
+        let x = stmt
             .query_map([], |row| {
                 Ok(TaskItem {
                     id: row.get(0)?,
                     title: row.get(1)?,
                     completed: row.get(2)?,
                 })
-            })
-            .unwrap()
-            .map(|res| res.unwrap())
-            .collect::<Vec<TaskItem>>();
-        taskItems
+            })?
+            .collect();
+        x
     });
 
-    Ok(taskItems)
+    result.map_err(|reason| {
+        tracing::error!(?reason, "failed to fetch tasks");
+        ServerFnError::ServerError("failed to fetch tasks from db!".into())
+    })
 }
 
 #[server]

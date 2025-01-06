@@ -1,9 +1,7 @@
-use console_log::init_with_level;
 use dioxus::prelude::*;
 
 mod backend;
 mod components;
-
 
 use components::TaskView;
 static CSS: Asset = asset!("/assets/main.css");
@@ -12,11 +10,11 @@ static CSS: Asset = asset!("/assets/main.css");
 enum Route {
     #[layout(components::NavBar)]
     #[route("/")]
-    TaskView{},
+    TaskView {},
 }
 
 fn main() {
-    init_with_level(log::Level::Info).expect("Failed to initialize logger");
+    dioxus::logger::initialize_default();
     dioxus::launch(App);
 }
 
@@ -24,6 +22,6 @@ fn main() {
 fn App() -> Element {
     rsx! {
         document::Stylesheet { href: CSS }
-        Router::<Route> {}
+        SuspenseBoundary { fallback: |_| rsx! { "Loading..." }, Router::<Route> {} }
     }
 }

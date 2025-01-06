@@ -4,8 +4,7 @@ use dioxus::prelude::*;
 #[component]
 pub fn NavBar() -> Element {
     rsx! {
-        div { 
-            id: "nav-bar",
+        div { id: "nav-bar",
             h1 { "Todo App" }
         }
         Outlet::<Route> {}
